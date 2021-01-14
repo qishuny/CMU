@@ -29,3 +29,6 @@ Feedback-stabilizing controller around the open-loop state
 ### HW4
 iLQR algorithm\
 analyze the stability of the rimless wheel walking down a uniform slope\
+
+## RFT modeling 
+Apply Resistive Force Theory (RFT) on the Terradynamics of Legged Locomotion on Granular Media
