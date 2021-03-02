@@ -59,7 +59,7 @@ function simulation(T,dt,w,pos_points,beta,area)
         
         depth = 0;
         [pos_all,beta_all] = pos_limit(pos_points,depth,beta);
-        vel_all = vel_func(pos_all,w);
+        vel_all = vel_func(pos_allz,w);
         [alphaX_all,alphaZ_all] = alpha_all(pos_all,vel_all,beta);
 %         [u,v]= beta_plot(pos_points,vel_points,beta,gamma)
 
