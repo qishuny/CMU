@@ -99,6 +99,7 @@ if __name__ == '__main__':
     """
     Initialize Parameters
     """
+    np.random.seed(50)
     parser = argparse.ArgumentParser()
     parser.add_argument('--path_to_map', default='../data/map/wean.dat')
     parser.add_argument('--path_to_log', default='../data/log/robotdata1.log')
@@ -121,11 +122,15 @@ if __name__ == '__main__':
 
     map_model = ReadTable()
     ray_map = map_model.return_Map()
+    print(ray_map.shape)
     # ray_map = 0
 
     bool_occ_map = (occupancy_map < 0.35) & (occupancy_map >= 0)
 
     num_particles = args.num_particles
+
+    initial_num = num_particles
+    
     # X_bar = init_particles_random(num_particles, occupancy_map)
     X_bar = init_particles_freespace(num_particles, occupancy_map)
 
@@ -170,7 +175,7 @@ if __name__ == '__main__':
         X_bar_new = np.zeros((num_particles, 4), dtype=np.float64)
         u_t1 = odometry_robot
 
-        initial_num = num_particles
+        
 
 
         # Note: this formulation is intuitive but not vectorized; looping in python is SLOW.
@@ -204,18 +209,11 @@ if __name__ == '__main__':
         X_bar = resampler.low_variance_sampler(X_bar)
         # X_bar = resampler.multinomial_sampler(X_bar)
         np.random.shuffle(X_bar)
-        decay_parameter = 10000
-        decay_num = int(initial_num*math.exp(-1/decay_parameter*time_idx))
-        decay_num = min(decay_num,X_bar.shape[0])
-       
-        
-        
-        decay_num = max(decay_num,(2000-time_idx))
+        decay_num = initial_num -time_idx
         decay_num = decay_num if decay_num>300 else 300
         X_bar = X_bar[:decay_num][:]
         num_particles = decay_num
-        
-        
+        print(num_particles)
         
         if args.visualize:
             visualize_timestep(X_bar, time_idx, args.output)

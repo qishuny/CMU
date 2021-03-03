@@ -26,8 +26,8 @@ class SensorModel:
         self._z_hit = 10
         self._z_short = 0.1
         self._z_max = 0.1
-        self._z_rand = 1000
-
+        self._z_rand = 10000
+        
         z_sum = self._z_hit + self._z_short + self._z_max + self._z_rand 
         self._z_hit = self._z_hit / z_sum
         self._z_short = self._z_short / z_sum
@@ -38,9 +38,14 @@ class SensorModel:
         self._lambda_short = 0.1
 
         self._max_range = 1000
+        # self._max_range = 8184
         self._min_probability = 0.35
         self.bool_occ_map = (occupancy_map < self._min_probability) & (occupancy_map >= 0)
         
+        # self.stored_occ_map = occupancy_map
+#         self._subsampling = 2
+
+#         self._norm_wts = 1.0
 
     def ray_cast(self, laser_x_t1, laser_y_t1, laser_theta, walk_stride):
         
@@ -68,8 +73,8 @@ class SensorModel:
         #     calc_distance = self._max_range # this is when the wall is further than max_range distance away
         x_end = laser_x_t1
         y_end = laser_y_t1
-        x_idx = int(np.round(x_end/10))
-        y_idx = int(np.round(y_end/10))
+        x_idx = int(np.around(x_end/10))
+        y_idx = int(np.around(y_end/10))
 
         temp_location = self.bool_occ_map[y_idx][x_idx]
         while x_idx >= 0 and  x_idx <= 799 and y_idx >= 0 and  y_idx <= 799 and temp_location==True:
@@ -80,6 +85,7 @@ class SensorModel:
             y_idx = int(np.around(y_end/10))
 
         calc_distance = math.sqrt((laser_x_t1-x_end)**2+(laser_y_t1-y_end)**2)
+        calc_distance = calc_distance-walk_stride/2
         return calc_distance 
 
     def calc_prob(self, ray_cast_distance, measurement_distance):
@@ -155,11 +161,13 @@ class SensorModel:
             laser_theta = (deg + theta * 180 / math.pi ) * (math.pi/180)
             measurement_distance = z_t1_arr[deg+90]
 
-            ray_cast_distance = self.ray_cast_read(laser_x_t1, laser_y_t1, laser_theta, table)
-            # ray_cast_distance= self.ray_cast(laser_x_t1, laser_y_t1, laser_theta, walk_stride)
+            # ray_cast_distance = self.ray_cast_read(laser_x_t1, laser_y_t1, laser_theta, table)
+            ray_cast_distance= self.ray_cast(laser_x_t1, laser_y_t1, laser_theta, walk_stride)
+            
             # print("laser theta",laser_theta*180/math.pi)
             # print("ray cast", ray_cast_distance)
             # print(" ")
+
             particle_prob = self.calc_prob(ray_cast_distance, measurement_distance)
             prob_zt1 *= particle_prob
 
@@ -183,19 +191,25 @@ class SensorModel:
         yhigh = int(ylow if xlow == 7995 else ylow + 5)
         laser_theta = laser_theta*180/math.pi if laser_theta>=0 else laser_theta*180/math.pi+180*2
 
-        thetalow = min(int(laser_theta/5)*5,355)
+        thetalow = min(int(laser_theta/5),71)
         thetahigh = int(thetalow if thetalow == 355 else thetalow + 5)
 
-        xd = (laser_x_t1-xlow)/(5)
-        yd = (laser_y_t1-ylow)/(5)
-        zd = (laser_theta-thetalow)/(5)
+        if (xhigh-xlow) ==0: 
+            xd = 0
+        if (yhigh-ylow) ==0: 
+            yd = 0
+        if (thetahigh-thetalow) ==0: 
+            zd = 0
+        xd = (laser_x_t1-xlow)/(xhigh-xlow)
+        yd = (laser_y_t1-ylow)/(yhigh-ylow)
+        zd = (laser_theta-thetalow)/(thetahigh-thetalow)
 
         xlow_idx = int((xlow-3000)/5)
         xhigh_idx = int((xhigh-3000)/5) 
         ylow_idx = int(ylow/5)
         yhigh_idx = int(yhigh/5) 
-        thetalow_idx = int(thetalow/5)
-        thetahigh_idx = int(thetahigh/5)
+        thetalow_idx = int(thetalow/2)
+        thetahigh_idx = int(thetahigh/2)
 
         c000 = table[xlow_idx][ylow_idx][thetalow_idx]
         c100 = table[xhigh_idx][ylow_idx][thetalow_idx]

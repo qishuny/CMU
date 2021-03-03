@@ -21,8 +21,8 @@ class MotionModel:
         """
         self._alpha1 = 0.0005
         self._alpha2 = 0.0005
-        self._alpha3 = 0.001
-        self._alpha4 = 0.001
+        self._alpha3 = 0.0005
+        self._alpha4 = 0.0005
 
 
     def update(self, u_t0, u_t1, x_t0):
